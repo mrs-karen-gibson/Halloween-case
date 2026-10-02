@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Case of the Missing Halloween Candy</title>
+<style>
+:root{--ink:#211b25;--purple:#5b3a70;--orange:#e8751a;--cream:#fff8e7;--paper:#fffdf8;--red:#9b2c2c;--green:#39734d;--gray:#ece7ef}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#17131b;color:var(--ink)}
+header{background:linear-gradient(135deg,#251a2c,#5b3a70);color:white;padding:28px 18px;text-align:center;border-bottom:6px solid var(--orange)}
+header h1{margin:0;font-size:clamp(28px,5vw,48px)} header p{margin:8px 0 0;color:#ffe0bd;font-weight:700}
+main{max-width:1050px;margin:auto;padding:22px}.panel{background:var(--paper);border:3px solid var(--orange);border-radius:18px;padding:22px;margin:0 0 20px;box-shadow:0 10px 24px #0005}
+h2,h3{color:var(--purple)}.case{background:var(--cream);border-left:7px solid var(--orange);padding:14px;border-radius:10px}
+label{font-weight:700}.setup{display:grid;grid-template-columns:1fr 180px;gap:12px}input,select,button{font:inherit}
+input,select{width:100%;padding:11px;border:2px solid #bbb;border-radius:9px;background:white}
+button{border:0;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer;background:var(--orange);color:white}
+button:hover{filter:brightness(.95)}button.secondary{background:var(--purple)}button:disabled{background:#aaa;cursor:not-allowed}
+.topbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center}.badge{background:#2d2432;color:white;padding:8px 12px;border-radius:999px;font-weight:800}
+.progress{height:15px;background:#ddd;border-radius:20px;overflow:hidden;margin:12px 0}.progress>div{height:100%;width:0;background:var(--orange);transition:.3s}
+.suspects{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.suspect{border:2px solid var(--purple);border-radius:12px;padding:12px;text-align:center;background:white;min-height:118px;position:relative}
+.suspect .icon{font-size:30px}.suspect strong{display:block;color:var(--purple);font-size:18px}.suspect small{display:block;margin-top:5px}
+.suspect.out{opacity:.38;filter:grayscale(1)}.suspect.out:after{content:"ELIMINATED";position:absolute;inset:44% 5% auto;transform:rotate(-10deg);background:var(--red);color:white;font-weight:900;padding:4px;border-radius:4px}
+.file{display:none}.file.active{display:block}.problem{background:#faf7fb;border:1px solid #d7cedc;border-radius:12px;padding:14px;margin:12px 0}
+.eq{font-size:19px;font-weight:800;margin-bottom:10px}.answer-row{display:flex;gap:8px;align-items:center}.answer-row input,.answer-row select{max-width:280px}
+.feedback{font-weight:800;margin-top:8px;min-height:20px}.ok{color:var(--green)}.bad{color:var(--red)}
+.evidence{display:none;margin-top:16px;background:#fff0db;border:3px dashed var(--orange);padding:18px;border-radius:12px;text-align:center;font-weight:800;font-size:18px}
+.locked{padding:18px;text-align:center;color:#666;background:#eee;border-radius:12px;font-weight:800}.finalChoices{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.finalChoices button{background:var(--purple)}#caseClosed{display:none;text-align:center;background:#e9f6ed;border:4px solid var(--green);padding:25px;border-radius:16px}
+#caseClosed h2{font-size:38px;color:var(--green);margin:5px}.tiny{font-size:13px;color:#666}.teacher-note{font-size:13px;background:#f1edf4;padding:10px;border-radius:8px}
+@media(max-width:720px){.suspects,.finalChoices{grid-template-columns:repeat(2,1fr)}.setup{grid-template-columns:1fr}.answer-row{flex-direction:column;align-items:stretch}}
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:36px">🎃 🔎 🍬</div>
+  <h1>The Case of the Missing Halloween Candy</h1>
+  <p>8th Grade Equation Mystery • Harder Edition</p>
+</header>
+<main>
+<section class="panel" id="start">
+  <h2>🗂️ Detective Check-In</h2>
+  <div class="case"><b>CASE:</b> The Halloween candy has vanished. Eight suspicious characters were seen near the classroom. Solve each investigation correctly to unlock evidence, eliminate suspects, and identify the Candy Culprit.</div>
+  <br>
+  <div class="setup">
+    <div><label for="student">Detective Name</label><input id="student" placeholder="Enter your first and last name"></div>
+    <div><label for="period">Class Period</label><select id="period"><option value="">Choose...</option><option>3rd</option><option>4th</option><option>5th</option><option>6th</option></select></div>
+  </div>
+  <br><button onclick="begin()">BEGIN INVESTIGATION →</button>
+</section>
+
+<section class="panel" id="game" style="display:none">
+ <div class="topbar"><div><b id="detectiveName"></b> • <span id="periodName"></span></div><div class="badge">Solved: <span id="solved">0</span>/20</div></div>
+ <div class="progress"><div id="bar"></div></div>
+ <h2>👤 Suspect Board</h2>
+ <div class="suspects" id="suspects"></div>
+</section>
+
+<div id="files"></div>
+
+<section class="panel" id="finalPanel" style="display:none">
+ <h2>🚨 Final Accusation</h2>
+ <p>You've collected all five pieces of evidence. Who stole the Halloween candy?</p>
+ <div class="finalChoices" id="choices"></div>
+ <p class="feedback" id="finalFeedback"></p>
+ <div id="caseClosed">
+   <div style="font-size:55px">🎃🍬🔎</div>
+   <h2>CASE CLOSED!</h2>
+   <p><b>Jack</b> stole the Halloween candy.</p>
+   <p id="finishLine"></p>
+   <div style="margin:18px auto;padding:15px;max-width:520px;background:#fff8e7;border:2px solid #e8751a;border-radius:12px">
+     <b>Final Step — Submit Your Completion</b>
+     <p style="margin:8px 0 12px">Click below to submit your name and completion information to Mrs. Gibson. This button appears only after you complete all 20 equations and correctly solve the case.</p>
+     <a href="https://forms.gle/yHXqcrcS7qFTuDLp7" target="_blank" rel="noopener" style="display:inline-block;background:#e8751a;color:white;text-decoration:none;font-weight:800;padding:12px 18px;border-radius:10px">SUBMIT MY COMPLETION →</a>
+   </div>
+   <button onclick="window.print()">PRINT / SAVE RESULT</button>
+ </div>
+</section>
+
+<section class="panel teacher-note">
+ <b>Teacher note:</b> Student progress is stored only in this browser tab. This GitHub Pages version does not automatically send grades to Google Classroom.
+</section>
+</main>
+
+<script>
+const suspects=[
+ {n:"Jason",icon:"🏒",detail:"Black duffel bag"},
+ {n:"Carrie",icon:"👗",detail:"Red shoes"},
+ {n:"Freddy",icon:"🧤",detail:"Brown backpack"},
+ {n:"Michael",icon:"🎭",detail:"Dark hoodie"},
+ {n:"Wednesday",icon:"🖤",detail:"Black backpack"},
+ {n:"Norman",icon:"🏚️",detail:"Silver shoes"},
+ {n:"Chucky",icon:"🧸",detail:"Orange bag"},
+ {n:"Jack",icon:"🎃",detail:"Purple bag"}
+];
+
+const investigations=[
+ {title:"FILE 1 — The Torn Candy Wrapper",skill:"Distribute + Combine Like Terms",
+ intro:"Distribute and combine like terms carefully. One problem includes a decimal coefficient.",
+ problems:[
+  ["3(x + 4) + 2x = 32","4"],
+  ["4(x - 2) + 3x + 1 = 28","5"],
+  ["2(3x + 5) - x = 40","6"],
+  ["1.5(2x + 4) + x = 34","7"]
+ ],evidence:"The culprit was NOT wearing red shoes.",out:["Carrie"]},
+ {title:"FILE 2 — The Mysterious Footprint",skill:"Distribution + Combining Like Terms",
+ intro:"Simplify each equation by distributing and combining like terms. One problem includes a fraction.",
+ problems:[
+  ["2(3x - 4) + x = 48","8"],
+  ["5(x + 2) + 2x - 3 = 70","9"],
+  ["4(2x - 3) - 3x = 38","10"],
+  ["(1/2)(6x + 8) + 2x = 59","11"]
+ ],evidence:"The culprit was NOT wearing a dark hoodie and was NOT wearing silver shoes.",out:["Michael","Norman"]},
+ {title:"FILE 3 — The Witness Statement",skill:"Multi-Step Distribution",
+ intro:"The witness remembers four equations. Distribute first and combine like terms before isolating x. One problem includes a decimal.",
+ problems:[
+  ["3(2x + 5) - x = 75","12"],
+  ["4(x - 3) + 2x + 5 = 71","13"],
+  ["2(4x + 1) - 3x = 72","14"],
+  ["0.5(8x + 10) + x = 80","15"]
+ ],evidence:"The witness is certain the culprit was NOT carrying a backpack.",out:["Freddy","Wednesday"]},
+ {title:"FILE 4 — Security Camera Analysis",skill:"Distribute + Variables on Both Sides",
+ intro:"Simplify both sides before solving. One problem includes a fraction.",
+ problems:[
+  ["3(x + 4) + 2x = 2(x + 6) + 48","16"],
+  ["4(x - 2) + 3x = 2(x + 5) + 67","17"],
+  ["5(x + 1) - 2x = x + 41","18"],
+  ["(1/2)(8x + 6) + 2x = 3x + 60","19"]
+ ],evidence:"The culprit was carrying a bag, but it was NOT a duffel bag.",out:["Jason"]},
+ {title:"FILE 5 — The Final Fingerprint",skill:"Types of Solutions",
+ intro:"Simplify both sides. Classify each equation as ONE SOLUTION, NO SOLUTION, or INFINITELY MANY SOLUTIONS. Only one equation contains a fraction.",
+ type:"classify",
+ problems:[
+  ["3(x + 4) + x = 4x + 12","infinite"],
+  ["2(3x + 5) - x = 5x + 14","none"],
+  ["4(x - 2) + 2x = 3x + 52","one"],
+  ["(1/2)(8x + 6) + 2x = 6x + 3","infinite"]
+ ],evidence:"A fiber caught on the candy container matches a PURPLE BAG.",out:["Chucky"]}
+];
+
+let solved=0,current=0,eliminated=new Set(),student="",period="";
+function begin(){
+ student=document.getElementById("student").value.trim(); period=document.getElementById("period").value;
+ if(!student||!period){alert("Enter your name and choose your class period.");return}
+ document.getElementById("start").style.display="none";document.getElementById("game").style.display="block";
+ document.getElementById("detectiveName").textContent=student;document.getElementById("periodName").textContent=period+" Period";
+ renderSuspects();renderFiles();document.getElementById("file0").classList.add("active");
+}
+function renderSuspects(){
+ document.getElementById("suspects").innerHTML=suspects.map(s=>`<div class="suspect ${eliminated.has(s.n)?"out":""}"><div class="icon">${s.icon}</div><strong>${s.n}</strong><small>${s.detail}</small></div>`).join("");
+}
+function renderFiles(){
+ const host=document.getElementById("files");host.innerHTML="";
+ investigations.forEach((f,fi)=>{
+  const sec=document.createElement("section");sec.className="panel file";sec.id="file"+fi;
+  let probs=f.problems.map((p,pi)=>{
+   let input=f.type==="classify"
+    ? `<select id="a${fi}_${pi}"><option value="">Choose classification...</option><option value="one">One Solution</option><option value="none">No Solution</option><option value="infinite">Infinitely Many Solutions</option></select>`
+    : `<input id="a${fi}_${pi}" inputmode="decimal" placeholder="x = ?">`;
+   return `<div class="problem"><div class="eq">${fi*4+pi+1}. ${p[0]}</div><div class="answer-row">${input}<button onclick="check(${fi},${pi})">CHECK</button></div><div class="feedback" id="fb${fi}_${pi}"></div></div>`;
+  }).join("");
+  sec.innerHTML=`<h2>🔐 ${f.title}</h2><h3>${f.skill}</h3><p>${f.intro}</p>${probs}<div class="evidence" id="ev${fi}">🔎 <b>EVIDENCE UNLOCKED</b><br><br>${f.evidence}<br><span id="elim${fi}"></span></div><div id="next${fi}"></div>`;
+  host.appendChild(sec);
+ });
+}
+function norm(v){return v.trim().toLowerCase().replace(/\s/g,"")}
+function check(fi,pi){
+ if(fi!==current)return;
+ const f=investigations[fi], el=document.getElementById(`a${fi}_${pi}`), fb=document.getElementById(`fb${fi}_${pi}`);
+ if(el.dataset.correct==="1"){fb.textContent="✓ Already solved";fb.className="feedback ok";return}
+ let v=norm(el.value), target=f.problems[pi][1], good=false;
+ if(f.type==="classify") good=v===target;
+ else{
+   v=v.replace(/^x=/,"");
+   const num=Number(v); good=v!=="" && Number.isFinite(num) && Math.abs(num-Number(target))<0.0001;
+ }
+ if(good){
+   el.dataset.correct="1";el.disabled=true;fb.textContent="✓ Correct! Evidence work is progressing.";fb.className="feedback ok";
+   solved++;updateProgress();checkFile(fi);
+ }else{
+   fb.textContent="✗ Not yet. Check distribution, signs, and like terms. Try again.";fb.className="feedback bad";
+ }
+}
+function updateProgress(){document.getElementById("solved").textContent=solved;document.getElementById("bar").style.width=(solved/20*100)+"%"}
+function checkFile(fi){
+ const all=investigations[fi].problems.every((_,pi)=>document.getElementById(`a${fi}_${pi}`).dataset.correct==="1");
+ if(!all)return;
+ const f=investigations[fi];f.out.forEach(n=>eliminated.add(n));renderSuspects();
+ document.getElementById("ev"+fi).style.display="block";
+ document.getElementById("elim"+fi).innerHTML="<br><b>Eliminate: "+f.out.join(" and ")+"</b>";
+ if(fi<investigations.length-1){
+   document.getElementById("next"+fi).innerHTML=`<br><button class="secondary" onclick="nextFile(${fi})">UNLOCK NEXT INVESTIGATION →</button>`;
+ }else{
+   document.getElementById("next"+fi).innerHTML=`<br><button class="secondary" onclick="finalCase()">MAKE FINAL ACCUSATION →</button>`;
+ }
+}
+function nextFile(fi){
+ document.getElementById("file"+fi).classList.remove("active");current=fi+1;
+ document.getElementById("file"+current).classList.add("active");window.scrollTo({top:document.getElementById("file"+current).offsetTop-15,behavior:"smooth"});
+}
+function finalCase(){
+ document.getElementById("file4").classList.remove("active");document.getElementById("finalPanel").style.display="block";
+ document.getElementById("choices").innerHTML=suspects.map(s=>`<button onclick="accuse('${s.n}')">${s.n}</button>`).join("");
+ window.scrollTo({top:document.getElementById("finalPanel").offsetTop-15,behavior:"smooth"});
+}
+function accuse(name){
+ const fb=document.getElementById("finalFeedback");
+ if(name==="Jack"){
+  fb.textContent="Correct — the evidence points to Jack!";fb.className="feedback ok";
+  document.getElementById("caseClosed").style.display="block";
+  document.getElementById("finishLine").textContent=`Detective ${student} • ${period} Period • 20/20 equations completed`;
+  [...document.querySelectorAll("#choices button")].forEach(b=>b.disabled=true);
+ }else{
+  fb.textContent="That suspect does not match all five pieces of evidence. Recheck your suspect board.";fb.className="feedback bad";
+ }
+}
+</script>
+</body>
+</html>
